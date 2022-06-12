@@ -1,0 +1,15 @@
+{% extends 'base/main.html'%}
+{% load static %}
+{% block content %}
+<main>
+    <section id="room-main-wraper">
+        <p id="room-name">Room name: <span></span></p>
+    </section>
+    <section id="video-streams">
+       
+       
+    </section>
+</main>
+<script type="text/javascript" src="{static 'assets/AgoraRTC_N-4.11.1.js'}"></script>
+<script type="text/javascript" src="{static 'js/streams.js'}"></script>
+{% endblock content %}
