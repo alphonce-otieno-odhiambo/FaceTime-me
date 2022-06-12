@@ -40,6 +40,29 @@ body{
     background-color: rgb(198, 202, 219, 1);
 }
 .video-player{
-    height: 90%;
+    height: 100%;
     width: 100%;
+}
+/* room stylings controls */
+#controls-wrapper{
+    display: flex;
+    width: 100%;
+    justify-content: center;
+    column-gap: 1em;
+    position: fixed;
+    bottom: 20px;
+    align-items: center;
+   
+}
+.control-icons{
+    height: 30px;
+    width: 30px;
+    box-shadow:var(--shadow);
+    background: #fff;
+    cursor: pointer;
+    padding: 10px;
+    border-radius: 5px;
+}
+#leave-btn{
+    background-color: rgb(255, 80, 80,1);
 }
