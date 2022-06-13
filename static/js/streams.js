@@ -1,23 +1,39 @@
 const APP_ID = '6d6cf41ea2f349ce9d417adf432ac392'
-const CHANNEL = 'ali'
-const TOKEN = '0066d6cf41ea2f349ce9d417adf432ac392IAA5pZ0jwumkscksh7Gi5lRjEw7A05+SJvXRgemwb3kgZVKFcksAAAAAEABF5qhUBSWnYgEAAQAFJadi'
+const CHANNEL = sessionStorage.getItem('ali')
+const TOKEN = sessionStorage.getItem('token')
+let UID = Number(sessionStorage.getItem('UID'))
+let NAME = sessionStorage.getItem('name')
 
 const client = AgoraRTC.createClient({mode:'rtc', codec:'vp8'})
+
+
 let localTracks = []
 let remoteUsers = {}
 
 let joinAndDisplayLocalStream = async () => {
+    document.getElementById('room-name').innerText = CHANNEL
+
     client.on('user-published', handleUserJoined)
     client.on('user-left', handleUserLeft)
+
+    try{
+       await client.join(APP_ID, CHANNEL, TOKEN, UID)
+    }catch(error){
+        console.error(error)
+        window.open('/', '_self')
+    }
+
 
     UID =  await client.join(APP_ID, CHANNEL, TOKEN, null)
 
     localTracks = await AgoraRTC.createMicrophoneAndCameraTracks()
 
+    let member = await createMember()
+
     let player = `
                 div class="video-container" id="user-container-${UID}">
-                    <div class="username-wrapper"><span class="user-name"></span>My name
-                    </div>
+                    <div class="username-wrapper"><span class="user-name">${member.name} </span></div>
+                    
                     <div class="video-player" id="user-${UID}">
                     </div>
                 </div>
@@ -30,6 +46,7 @@ let joinAndDisplayLocalStream = async () => {
 
 
 let handleUserJoined = async (user, mediaType) => {
+
     remoteUsers[user.uid] = user
     await client.subscribe(user, mediaType)
 
@@ -40,10 +57,12 @@ let handleUserJoined = async (user, mediaType) => {
             player.remove()
         }
 
-       player = `<div  class="video-container" id="user-container-${user.uid}">
-            <div class="video-player" id="user-${user.uid}"></div>
-            <div class="username-wrapper"><span class="user-name">${member.name}</span></div>
-        </div>`
+        let member = await getMembers(user)
+
+       player = (`<div  class="video-container" id="user-container-${user.uid}">
+                <div class="username-wrapper"><span class="user-name">${member.name}</span></div>
+                <div class="video-player" id="user-${user.uid}"></div>           
+                </div>`)
 
         document.getElementById('video-streams').insertAdjacentHTML('beforeend', player)
         user.videoTrack.play(`user-${user.uid}`)
@@ -69,7 +88,7 @@ let leaveAndRemoveLocalStream = async () => {
     }
     await client.leave()
     //This is somewhat of an issue because if user leaves without actaull pressing leave button, it will not trigger
-    // deleteMember()
+    deleteMember()
     window.open('/', '_self')
 }
 
@@ -95,7 +114,41 @@ let toggleMic = async (e) => {
 }
 
 
+let createMember = async() => {
+    let response = await fetch('/create_member/', {
+        method:'POST',
+        headers:{
+            'content: _type':'application/json'
+        },
+        body:JSON.stringify({'name':NAME, 'room_name':CHANNEL, 'UID':UID})
+    })
+    let member = await response.json()
+    return member
+}
+
+let getMembers = async(user) => {
+    let response = await fetch(`/get_Members/?UID=${user.uid}&room_name=${CHANNEL}`)
+    let member = await response.json()
+    return member
+}
+
+let deleteMember = async() => {
+    let response = await fetch('/delete_member/', {
+        method:'POST',
+        headers:{
+            'content: _type':'application/json'
+        },
+        body:JSON.stringify({'name':NAME, 'room_name':CHANNEL, 'UID':UID})
+    })
+    let member = await response.json()
+    
+}
+
+
+
 joinAndDisplayLocalStream();
+
+window.addEventListener('beforeunload', deleteMember)
 document.getElementById('leave-btn').addEventListener('click', leaveAndRemoveLocalStream )
 document.getElementById('camera-btn').addEventListener('click', toggleCamera )
 document.getElementById('mic-btn').addEventListener('click', toggleMic )
